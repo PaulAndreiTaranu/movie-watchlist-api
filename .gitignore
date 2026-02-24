@@ -19,3 +19,4 @@ src/generated/prisma
 
 # Claude
 CLAUDE.md
+/src/generated/prisma

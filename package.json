@@ -4,15 +4,23 @@
     "description": "",
     "main": "src/index.ts",
     "scripts": {
-        "dev": "tsx --watch src/index.ts",
-        "build": "tsc",
-        "start": "node dist/index.js"
+        "with-local-env": "dotenvx run -f .env.local --",
+        "build": "pnpm with-local-env tsc",
+        "start": "node dist/index.js",
+        "dev": "pnpm with-local-env tsx --watch src/index.ts",
+        "prisma:gen": "pnpm with-local-env prisma generate",
+        "prisma:migrate": "pnpm with-local-env prisma migrate dev",
+        "prisma:studio": "pnpm with-local-env prisma studio",
+        "prisma:reset": "pnpm with-local-env prisma migrate reset --force",
+        "prisma:seed": "pnpm with-local-env prisma db seed"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "packageManager": "pnpm@10.20.0",
     "dependencies": {
+        "@dotenvx/dotenvx": "^1.52.0",
+        "@prisma/adapter-pg": "^7.4.1",
         "@prisma/client": "^7.4.1",
         "express": "^5.2.1",
         "zod": "^4.3.6"

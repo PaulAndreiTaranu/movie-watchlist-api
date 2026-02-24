@@ -48,3 +48,51 @@ Four models defined in `prisma/schema.prisma`:
 All relations cascade on delete. All primary keys are UUIDs.
 
 ## Build log
+
+### Commit 1: Initial project scaffolding
+
+**Terminal commands:**
+
+```bash
+pnpm init
+pnpm add express @prisma/client zod
+pnpm add -D typescript @types/express @types/node tsx prisma
+```
+
+Files created:
+
+- .gitignore — Ignores node_modules, dist, .env files, Prisma generated client, logs, OS files,
+  CLAUDE.md
+- tsconfig.json — TypeScript config targeting ES2022, Node16 module resolution, strict mode, output
+  to dist/, source in src/
+- src/index.ts — Express 5 entry point with JSON body parsing and a /health endpoint returning {
+  status: "ok" }
+- package.json — Scripts: dev (tsx watch), build (tsc), start (node dist/index.js)
+
+### Commit 2: Docker, Prisma, dotenvx, and movie CRUD routes
+
+**Terminal commands:**
+
+```bash
+docker compose up -d --wait
+pnpm prisma init
+pnpm add @prisma/adapter-pg @dotenvx/dotenvx
+pnpm prisma migrate dev --name init
+```
+
+**Files created:**
+
+- **`docker-compose.yml`** — PostgreSQL 16 container with healthcheck, persistent volume, credentials: prisma/prisma, database: movie_watchlist
+- **`.env.local`** — DATABASE_URL pointing to local PostgreSQL container
+- **`prisma.config.ts`** — Prisma config with schema path, migrations path, and datasource URL from env
+- **`prisma/schema.prisma`** — Movie model (id, title, director, year, watched, rating, timestamps) with PostgreSQL adapter, output to `src/generated/prisma`
+- **`src/config/db.ts`** — Prisma client singleton using `@prisma/adapter-pg` driver adapter, with connect/disconnect helpers and dev query logging
+- **`src/controllers/movieController.ts`** — CRUD handlers: getAllMovies, getMovieById, createMovie, updateMovie, deleteMovie. Destructures req.body fields explicitly
+- **`src/routes/movieRoutes.ts`** — Routes wired to controller functions: GET `/`, GET `/:id`, POST `/`, PATCH `/:id`, DELETE `/:id`
+- **`src/index.ts`** — Updated to mount movie routes at `/movies`
+
+**package.json updates:**
+
+- Added `with-local-env` script using dotenvx to load `.env.local`
+- All db-dependent scripts prefixed with `pnpm with-local-env`
+- Added `prisma:migrate`, `prisma:gen`, `prisma:studio` scripts

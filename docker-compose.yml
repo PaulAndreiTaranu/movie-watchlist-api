@@ -1,0 +1,16 @@
+services:
+    db:
+        image: postgres:16
+        container_name: movie_watchlist_postgres
+        restart: unless-stopped
+        ports:
+            - '5432:5432'
+        environment:
+            POSTGRES_USER: prisma
+            POSTGRES_PASSWORD: prisma
+            POSTGRES_DB: movie_watchlist
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+
+volumes:
+    pgdata:
