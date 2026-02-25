@@ -1,49 +1,69 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { prisma } from '../config/db'
 
-export const getAllMovies = async (_req: Request, res: Response) => {
-    const movies = await prisma.movie.findMany()
-    res.json(movies)
-}
-
-export const getMovieById = async (req: Request, res: Response) => {
-    const movie = await prisma.movie.findUnique({
-        where: { id: Number(req.params.id) },
-    })
-
-    if (!movie) {
-        res.status(404).json({ error: 'Movie not found' })
-        return
+export const getAllMovies = async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const movies = await prisma.movie.findMany()
+        res.json(movies)
+    } catch (error) {
+        next(error)
     }
-
-    res.json(movie)
 }
 
-export const createMovie = async (req: Request, res: Response) => {
-    const { title, director, year, watched, rating } = req.body
+export const getMovieById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const movie = await prisma.movie.findUnique({
+            where: { id: Number(req.params.id) },
+        })
 
-    const movie = await prisma.movie.create({
-        data: { title, director, year, watched, rating },
-    })
+        if (!movie) {
+            res.status(404).json({ error: 'Movie not found' })
+            return
+        }
 
-    res.status(201).json(movie)
+        res.json(movie)
+    } catch (error) {
+        next(error)
+    }
 }
 
-export const updateMovie = async (req: Request, res: Response) => {
-    const { title, director, year, watched, rating } = req.body
+export const createMovie = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { title, director, year, watched, rating } = req.body
 
-    const movie = await prisma.movie.update({
-        where: { id: Number(req.params.id) },
-        data: { title, director, year, watched, rating },
-    })
+        const movie = await prisma.movie.create({
+            data: { title, director, year, watched, rating },
+        })
 
-    res.status(200).json(movie)
+        res.status(201).json(movie)
+    } catch (error) {
+        next(error)
+    }
 }
 
-export const deleteMovie = async (req: Request, res: Response) => {
-    const movie = await prisma.movie.delete({
-        where: { id: Number(req.params.id) },
-    })
+export const updateMovie = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { title, director, year, watched, rating } = req.body
 
-    res.status(204).json(movie)
+        const movie = await prisma.movie.update({
+            where: { id: Number(req.params.id) },
+            data: { title, director, year, watched, rating },
+        })
+
+        res.status(200).json(movie)
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const deleteMovie = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const movie = await prisma.movie.delete({
+            where: { id: Number(req.params.id) },
+        })
+
+        res.status(204).json(movie)
+    } catch (error) {
+        next(error)
+    }
 }

@@ -119,3 +119,15 @@ pnpm add -D vitest supertest @types/supertest
 
 - `dev` and `start` scripts now point to `src/server.ts`
 - Added `test` (`vitest --run`) and `test:watch` (`vitest`) scripts via `with-local-env`
+
+### Commit 4: Add global error handling
+
+**Files created:**
+
+- **`src/middleware/errorHandler.ts`** — Global Express error handler. Catches Prisma `P2025` (record not found) and returns 404 JSON. All other errors return 500. Must be mounted after all routes.
+
+**Files updated:**
+
+- **`src/controllers/movie.controller.ts`** — All handlers wrapped in try/catch, errors forwarded to error handler via `next(err)`. Added `NextFunction` parameter to all controller functions.
+- **`src/app.ts`** — Mounted `errorHandler` middleware after all routes
+- **`src/routes/movie.routes.test.ts`** — Added error handling tests: 404 on update/delete non-existent movie

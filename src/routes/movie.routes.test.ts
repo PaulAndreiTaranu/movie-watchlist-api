@@ -1,9 +1,13 @@
 import request from 'supertest'
-import { afterAll, afterEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { app } from '../app'
 import { prisma } from '../config/db'
 
 const testMovie = { title: 'Inception', director: 'Christopher Nolan', year: 2010 }
+
+beforeAll(async () => {
+    await prisma.$connect()
+})
 
 afterEach(async () => {
     await prisma.movie.deleteMany()
@@ -114,5 +118,22 @@ describe('DELETE /movies/:id', () => {
         })
 
         expect(deleted).toBeNull()
+    })
+})
+
+describe('Error handling', () => {
+    it('should return 404 when updating an non-existent movie', async () => {
+        const response = await request(app)
+            .patch('/movies/9999')
+            .send({ title: 'Ghost Movie' })
+            .expect(404)
+
+        expect(response.body.error).toBe('Record not found')
+    })
+
+    it('should return 404 when deleting an non-existent movie', async () => {
+        const response = await request(app).delete('/movies/9999').expect(404)
+
+        expect(response.body.error).toBe('Record not found')
     })
 })
