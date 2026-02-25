@@ -7,7 +7,7 @@ export const getAllMovies = async (_req: Request, res: Response) => {
 }
 
 export const getMovieById = async (req: Request, res: Response) => {
-    const movie = prisma.movie.findUnique({
+    const movie = await prisma.movie.findUnique({
         where: { id: Number(req.params.id) },
     })
 

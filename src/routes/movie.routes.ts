@@ -6,6 +6,8 @@ import {
     getMovieById,
     updateMovie,
 } from '../controllers/movie.controller'
+import { validate } from '../middleware/validate'
+import { createMovieSchema, updateMovieSchema } from '../schemas/movie.schema'
 
 export const movieRoutes = Router()
 
@@ -16,10 +18,10 @@ movieRoutes.get('/', getAllMovies)
 movieRoutes.get('/:id', getMovieById)
 
 // Create movie
-movieRoutes.post('/', createMovie)
+movieRoutes.post('/', validate(createMovieSchema), createMovie)
 
 // Update movie
-movieRoutes.patch('/:id', updateMovie)
+movieRoutes.patch('/:id', validate(updateMovieSchema), updateMovie)
 
 // Delete movie
 movieRoutes.delete('/:id', deleteMovie)

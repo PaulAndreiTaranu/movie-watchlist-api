@@ -96,3 +96,26 @@ pnpm prisma migrate dev --name init
 - Added `with-local-env` script using dotenvx to load `.env.local`
 - All db-dependent scripts prefixed with `pnpm with-local-env`
 - Added `prisma:migrate`, `prisma:gen`, `prisma:studio` scripts
+
+### Commit 3: Add Zod validation and Vitest + Supertest API tests
+
+**Terminal commands:**
+
+```bash
+pnpm add -D vitest supertest @types/supertest
+```
+
+**Files created:**
+
+- **`src/app.ts`** — Express app setup extracted from index.ts, exports `app` without calling `.listen()` so Supertest can import it directly
+- **`src/server.ts`** — Imports app and calls `.listen()`. Replaces `src/index.ts` as the entry point
+- **`src/schemas/movie.schema.ts`** — Zod validation schemas: `createMovieSchema` (title required, director/year/watched optional, rating 1-10) and `updateMovieSchema` (all fields optional via `.partial()`)
+- **`src/middleware/validate.ts`** — Reusable validation middleware that runs `schema.safeParse(req.body)`, returns 400 with formatted errors on failure, replaces `req.body` with parsed data on success
+- **`src/routes/movie.routes.ts`** — Updated to apply `validate(createMovieSchema)` on POST and `validate(updateMovieSchema)` on PATCH before controller handlers
+- **`src/routes/movie.routes.test.ts`** — Full CRUD test suite using Vitest + Supertest against real database. Tests: create movie, missing title (400), rating out of range (400), get all, get by id, 404 for non-existent, update, delete. Uses `afterEach` cleanup for test isolation
+- **`vitest.config.ts`** — Vitest config with globals, node environment, sequential file execution
+
+**package.json updates:**
+
+- `dev` and `start` scripts now point to `src/server.ts`
+- Added `test` (`vitest --run`) and `test:watch` (`vitest`) scripts via `with-local-env`
