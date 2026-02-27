@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { prisma } from '../config/db'
+import { prisma } from '../config/db.js'
 
 export const getAllMovies = async (_req: Request, res: Response, next: NextFunction) => {
     try {
@@ -13,7 +13,7 @@ export const getAllMovies = async (_req: Request, res: Response, next: NextFunct
 export const getMovieById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const movie = await prisma.movie.findUnique({
-            where: { id: Number(req.params.id) },
+            where: { id: req.params.id as string },
         })
 
         if (!movie) {
@@ -29,10 +29,10 @@ export const getMovieById = async (req: Request, res: Response, next: NextFuncti
 
 export const createMovie = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { title, director, year, watched, rating } = req.body
+        const { title, overview, director, releaseYear, genres } = req.body
 
         const movie = await prisma.movie.create({
-            data: { title, director, year, watched, rating },
+            data: { title, overview, director, releaseYear, genres, createdBy: req.user!.id },
         })
 
         res.status(201).json(movie)
@@ -43,11 +43,11 @@ export const createMovie = async (req: Request, res: Response, next: NextFunctio
 
 export const updateMovie = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { title, director, year, watched, rating } = req.body
+        const { title, overview, director, releaseYear, genres } = req.body
 
         const movie = await prisma.movie.update({
-            where: { id: Number(req.params.id) },
-            data: { title, director, year, watched, rating },
+            where: { id: req.params.id as string },
+            data: { title, overview, director, releaseYear, genres },
         })
 
         res.status(200).json(movie)
@@ -58,11 +58,11 @@ export const updateMovie = async (req: Request, res: Response, next: NextFunctio
 
 export const deleteMovie = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const movie = await prisma.movie.delete({
-            where: { id: Number(req.params.id) },
+        await prisma.movie.delete({
+            where: { id: req.params.id as string },
         })
 
-        res.status(204).json(movie)
+        res.status(204).send()
     } catch (error) {
         next(error)
     }

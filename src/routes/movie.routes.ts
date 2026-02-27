@@ -5,9 +5,10 @@ import {
     getAllMovies,
     getMovieById,
     updateMovie,
-} from '../controllers/movie.controller'
-import { validate } from '../middleware/validate'
-import { createMovieSchema, updateMovieSchema } from '../schemas/movie.schema'
+} from '../controllers/movie.controller.js'
+import { validate } from '../middleware/validate.middleware.js'
+import { createMovieSchema, updateMovieSchema } from '../schemas/movie.schema.js'
+import { authMiddleware } from '../middleware/auth.middleware.js'
 
 export const movieRoutes = Router()
 
@@ -18,10 +19,10 @@ movieRoutes.get('/', getAllMovies)
 movieRoutes.get('/:id', getMovieById)
 
 // Create movie
-movieRoutes.post('/', validate(createMovieSchema), createMovie)
+movieRoutes.post('/', authMiddleware, validate(createMovieSchema), createMovie)
 
 // Update movie
-movieRoutes.patch('/:id', validate(updateMovieSchema), updateMovie)
+movieRoutes.patch('/:id', authMiddleware, validate(updateMovieSchema), updateMovie)
 
 // Delete movie
-movieRoutes.delete('/:id', deleteMovie)
+movieRoutes.delete('/:id', authMiddleware, deleteMovie)

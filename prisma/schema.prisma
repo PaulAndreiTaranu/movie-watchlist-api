@@ -13,13 +13,66 @@ datasource db {
   provider = "postgresql"
 }
 
-model Movie {
-  id        Int      @id @default(autoincrement())
-  title     String
-  director  String?
-  year      Int?
-  watched   Boolean  @default(false)
-  rating    Int?
+model User {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt()
+
+  movies         Movie[]
+  watchListItems WatchlistItem[]
+  refreshTokens  RefreshToken[]
+}
+
+model Movie {
+  id          String   @id @default(uuid())
+  title       String   @unique
+  overview    String?
+  director    String?
+  releaseYear Int
+  genres      String[] @default([])
+
+  createdBy String
+  createdAt DateTime @default(now())
+
+  user           User            @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  watchlistItems WatchlistItem[]
+}
+
+model WatchlistItem {
+  id      String          @id @default(uuid())
+  userId  String
+  movieId String
+  status  WatchlistStatus
+  rating  Int?
+  notes   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@unique([movieId, userId])
+}
+
+enum WatchlistStatus {
+  PLANNED
+  WATCHING
+  COMPLETED
+  DROPPED
+}
+
+model RefreshToken {
+  id     String @id @default(uuid())
+  userId String
+  hashed String
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }

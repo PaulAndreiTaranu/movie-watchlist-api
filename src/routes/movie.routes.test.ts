@@ -1,12 +1,25 @@
 import request from 'supertest'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { app } from '../app'
-import { prisma } from '../config/db'
+import { app } from '../app.js'
+import { prisma } from '../config/db.js'
 
-const testMovie = { title: 'Inception', director: 'Christopher Nolan', year: 2010 }
+const testUser = { name: 'Test User', email: 'test@test.com', password: 'password123' }
+const testMovie = { title: 'Inception', director: 'Christopher Nolan', releaseYear: 2010 }
+
+let accessToken: string
+let userId: string
 
 beforeAll(async () => {
     await prisma.$connect()
+    await prisma.movie.deleteMany()
+    await prisma.refreshToken.deleteMany()
+    await prisma.user.deleteMany()
+
+    // Register user to get an access token for protected routes
+    const res = await request(app).post('/auth/register').send(testUser)
+
+    accessToken = res.body.accessToken
+    userId = res.body.user.id
 })
 
 afterEach(async () => {
@@ -14,6 +27,9 @@ afterEach(async () => {
 })
 
 afterAll(async () => {
+    await prisma.movie.deleteMany()
+    await prisma.refreshToken.deleteMany()
+    await prisma.user.deleteMany()
     await prisma.$disconnect()
 })
 
@@ -21,29 +37,28 @@ describe('POST /movies', () => {
     it('should create a movie', async () => {
         const response = await request(app)
             .post('/movies')
-            .send({ ...testMovie })
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send(testMovie)
             .expect(201)
 
         // Check the response
         expect(response.body.title).toBe(testMovie.title)
         expect(response.body.director).toBe(testMovie.director)
-        expect(response.body.year).toBe(testMovie.year)
-        expect(response.body.watched).toBe(false)
+        expect(response.body.releaseYear).toBe(testMovie.releaseYear)
+        expect(response.body.createdBy).toBe(userId)
         expect(response.body.id).toBeDefined()
+    })
+
+    it('should return 401 without auth token', async () => {
+        await request(app).post('/movies').send(testMovie).expect(401)
     })
 
     it('should return 400 when title is missing', async () => {
         const { title, ...movieWithoutTitle } = testMovie
-        const response = await request(app).post('/movies').send(movieWithoutTitle).expect(400)
-
-        // Zod validation should return errors details
-        expect(response.body.errors).toBeDefined()
-    })
-
-    it('should return 400 when rating is out of range', async () => {
         const response = await request(app)
             .post('/movies')
-            .send({ ...testMovie, rating: 11 })
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send(movieWithoutTitle)
             .expect(400)
 
         // Zod validation should return errors details
@@ -62,8 +77,8 @@ describe('GET /movies', () => {
         // Seed two movies via Prisma
         await prisma.movie.createMany({
             data: [
-                { title: 'Inception', year: 2010 },
-                { title: 'The Matrix', year: 1996 },
+                { title: 'Inception', releaseYear: 2010, createdBy: userId },
+                { title: 'The Matrix', releaseYear: 1996, createdBy: userId },
             ],
         })
 
@@ -75,8 +90,10 @@ describe('GET /movies', () => {
 
 describe('GET /movies/:id', () => {
     it('should return a movie by id', async () => {
-        // Create a movie and the fetch it by id
-        const movie = await prisma.movie.create({ data: testMovie })
+        // Create a movie and then fetch it by id
+        const movie = await prisma.movie.create({
+            data: { ...testMovie, createdBy: userId },
+        })
 
         const response = await request(app).get(`/movies/${movie.id}`).expect(200)
 
@@ -90,27 +107,33 @@ describe('GET /movies/:id', () => {
 
 describe('PATCH /movies/:id', () => {
     it('should update a movie', async () => {
-        const movie = await prisma.movie.create({ data: testMovie })
+        // Create a movie and then update it by id
+        const movie = await prisma.movie.create({
+            data: { ...testMovie, createdBy: userId },
+        })
 
         const response = await request(app)
             .patch(`/movies/${movie.id}`)
-            .send({
-                watched: true,
-                rating: 10,
-            })
+            .set('Authorization', `Bearer ${accessToken}`)
+            .send({ director: 'Nolan' })
             .expect(200)
 
-        expect(response.body.watched).toBe(true)
-        expect(response.body.rating).toBe(10)
         expect(response.body.title).toBe(testMovie.title)
+        expect(response.body.director).toBe('Nolan')
     })
 })
 
 describe('DELETE /movies/:id', () => {
     it('should delete a movie by id', async () => {
-        const movie = await prisma.movie.create({ data: testMovie })
+        // Create a movie and then delete it by id
+        const movie = await prisma.movie.create({
+            data: { ...testMovie, createdBy: userId },
+        })
 
-        await request(app).delete(`/movies/${movie.id}`).expect(204)
+        await request(app)
+            .delete(`/movies/${movie.id}`)
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(204)
 
         // Verify is actually gone from database
         const deleted = await prisma.movie.findUnique({
@@ -125,6 +148,7 @@ describe('Error handling', () => {
     it('should return 404 when updating an non-existent movie', async () => {
         const response = await request(app)
             .patch('/movies/9999')
+            .set('Authorization', `Bearer ${accessToken}`)
             .send({ title: 'Ghost Movie' })
             .expect(404)
 
@@ -132,7 +156,10 @@ describe('Error handling', () => {
     })
 
     it('should return 404 when deleting an non-existent movie', async () => {
-        const response = await request(app).delete('/movies/9999').expect(404)
+        const response = await request(app)
+            .delete('/movies/9999')
+            .set('Authorization', `Bearer ${accessToken}`)
+            .expect(404)
 
         expect(response.body.error).toBe('Record not found')
     })

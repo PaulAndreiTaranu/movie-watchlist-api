@@ -131,3 +131,40 @@ pnpm add -D vitest supertest @types/supertest
 - **`src/controllers/movie.controller.ts`** — All handlers wrapped in try/catch, errors forwarded to error handler via `next(err)`. Added `NextFunction` parameter to all controller functions.
 - **`src/app.ts`** — Mounted `errorHandler` middleware after all routes
 - **`src/routes/movie.routes.test.ts`** — Added error handling tests: 404 on update/delete non-existent movie
+
+### Commit 5: Add auth, expand schema, and protect movie routes
+
+**Terminal commands:**
+
+```bash
+pnpm add jose argon2 cookie-parser
+pnpm add -D @types/cookie-parser
+pnpm prisma:reset
+pnpm prisma:migrate -- --name add-user-watchlist-refresh-token
+```
+
+**Schema changes:**
+
+- **Movie** — now uses UUID primary key, `title` is unique, `year` → `releaseYear`, added `overview`, `genres`, `runtime`, `posterUrl`, `createdBy` (relation to User). Removed `watched`, `rating` (moved to WatchlistItem)
+- **User** (new) — name, email (unique), hashed password. Has many movies, watchlist items, refresh tokens
+- **WatchlistItem** (new) — links user to movie with status enum (PLANNED/WATCHING/COMPLETED/DROPPED), optional rating and notes. Compound unique on (movieId, userId)
+- **RefreshToken** (new) — hashed token with expiry, indexed by userId. For token rotation.
+
+**Files created:**
+
+- **`src/utils/jwt.ts`** — JWT signing/verification using `jose` with separate ACCESS and REFRESH secrets (HS256). Exports `signAccessToken`, `signRefreshToken`, `verifyAccessToken`, `verifyRefreshToken`, and expiry constants
+- **`src/controllers/auth.controller.ts`** — Register and login handlers. Private `issueTokens` helper creates both tokens in one flow: generates UUID, signs tokens in parallel, hashes refresh token with argon2, stores in DB, sets HTTP-only cookie
+- **`src/schemas/auth.schema.ts`** — Zod schemas for register (name, email, password min 8) and login (email, password)
+- **`src/routes/auth.routes.ts`** — POST `/register` and `/login` with Zod validation
+- **`src/middleware/authMiddleware.ts`** — Verifies Bearer token from Authorization header, attaches `req.user` with userId
+- **`src/types/express.d.ts`** — TypeScript declaration merging to add `user` property to Express Request
+- **`src/routes/auth.routes.test.ts`** — Tests: register, duplicate email (409), invalid email (400), short password (400), login, wrong password (401), non-existent email (401), refresh token cookie set
+
+**Files updated:**
+
+- **`src/schemas/movie.schema.ts`** — Updated fields: title, director, overview, releaseYear, genres, runtime, posterUrl
+- **`src/controllers/movie.controller.ts`** — IDs are now strings (UUIDs), updated fields, `createMovie` uses `req.user.id` for `createdBy`
+- **`src/routes/movie.routes.ts`** — POST, PATCH, DELETE now protected with `authMiddleware`
+- **`src/routes/movie.routes.test.ts`** — Tests register a user in `beforeAll` to get access token, protected routes include Bearer token, seeded movies include `createdBy`
+- **`src/app.ts`** — Mounted auth routes at `/auth`, added `cookie-parser` middleware
+- **`.env.local`** — Added `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`

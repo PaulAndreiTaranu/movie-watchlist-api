@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { Prisma } from '../generated/prisma'
+import { Prisma } from '../generated/prisma/index.js'
 
 export const errorHandler = (err: Error, _req: Request, res: Response, _next: NextFunction) => {
     // Prisma: record not found (update/delete  non-existent)

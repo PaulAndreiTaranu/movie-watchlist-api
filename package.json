@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "main": "src/server.ts",
+    "type": "module",
     "scripts": {
         "with-local-env": "dotenvx run -f .env.local --",
         "build": "pnpm with-local-env tsc",
@@ -24,7 +25,9 @@
         "@dotenvx/dotenvx": "^1.52.0",
         "@prisma/adapter-pg": "^7.4.1",
         "@prisma/client": "^7.4.1",
+        "argon2": "^0.44.0",
         "express": "^5.2.1",
+        "jose": "^6.1.3",
         "zod": "^4.3.6"
     },
     "devDependencies": {
