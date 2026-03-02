@@ -31,7 +31,6 @@ describe('POST /auth/register', () => {
         expect(response.body.user).not.toHaveProperty('password')
         expect(response.body.accessToken).toBeDefined()
         // Check cookies
-        console.log(cookies)
         expect(cookies).toBeDefined()
         expect(cookies[0]).toContain('refreshToken')
         expect(cookies[0]).toContain('HttpOnly')
@@ -107,5 +106,35 @@ describe('POST /auth/login', () => {
             .expect(401)
 
         expect(response.body.error).toBe('Invalid email or password')
+    })
+})
+
+describe('POST /auth/refresh', () => {
+    it('should return a new access token', async () => {
+        // Register to get cookie
+        const registerRes = await request(app).post('/auth/register').send(testUser)
+        // Extrat the cookie
+        const cookies = registerRes.headers['set-cookie']
+        // Send the cookie back to /refresh
+        const response = await request(app).post('/auth/refresh').set('Cookie', cookies).expect(200)
+
+        expect(response.body.accessToken).toBeDefined()
+    })
+
+    it('should return 401 without refresh token cookie', async () => {
+        const response = await request(app).post('/auth/refresh').expect(401)
+
+        expect(response.body.error).toBe('No refresh token')
+    })
+
+    it('should invalidate old refresh token after rotation', async () => {
+        // Register to get cookie
+        const registerRes = await request(app).post('/auth/register').send(testUser)
+        // Extrat the cookie
+        const cookies = registerRes.headers['set-cookie']
+        // Send the cookie back to /refresh
+        await request(app).post('/auth/refresh').set('Cookie', cookies).expect(200)
+        // Send the cookie again to /refresh, should fail
+        await request(app).post('/auth/refresh').set('Cookie', cookies).expect(401)
     })
 })

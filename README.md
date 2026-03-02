@@ -168,3 +168,12 @@ pnpm prisma:migrate -- --name add-user-watchlist-refresh-token
 - **`src/routes/movie.routes.test.ts`** — Tests register a user in `beforeAll` to get access token, protected routes include Bearer token, seeded movies include `createdBy`
 - **`src/app.ts`** — Mounted auth routes at `/auth`, added `cookie-parser` middleware
 - **`.env.local`** — Added `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`
+
+### Commit 6: Add refresh, logout, and auth tests
+
+**Files updated:**
+
+- **`src/controllers/auth.controller.ts`** — Added `refresh` (verifies refresh token cookie, validates against stored hash, deletes old token for rotation, issues new pair) and `logout` (deletes refresh token from DB, clears cookie)
+- **`src/routes/auth.routes.ts`** — Added POST `/refresh` and `/logout` routes
+- **`src/routes/auth.routes.test.ts`** — Added tests: refresh returns new access token, 401 without cookie, old token invalidated after rotation, logout clears cookie, logout succeeds without cookie, refresh fails after logout
+- **`src/config/db.ts`** — Prisma logging now only shows queries in development; test environment only logs errors

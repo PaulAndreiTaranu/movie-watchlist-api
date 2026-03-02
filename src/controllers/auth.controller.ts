@@ -1,7 +1,13 @@
 import argon2 from 'argon2'
 import { NextFunction, Request, Response } from 'express'
 import { prisma } from '../config/db.js'
-import { REFRESH_TOKEN_EXPIRY_MS, signAccessToken, signRefreshToken } from '../utils/jwt.js'
+import {
+    REFRESH_TOKEN_EXPIRY_MS,
+    signAccessToken,
+    signRefreshToken,
+    verifyAccessToken,
+    verifyRefreshToken,
+} from '../utils/jwt.js'
 import { randomUUID } from 'node:crypto'
 
 const issueTokens = async (userId: string, res: Response) => {
@@ -97,6 +103,80 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
             user: { id: user.id, name: user.name, email: user.email },
             accessToken,
         })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const refresh = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = req.cookies.refreshToken
+        if (!token) {
+            res.status(401).json({ error: 'No refresh token' })
+            return
+        }
+
+        // Verify the JWT signature and extract the payload
+        const { payload } = await verifyRefreshToken(token)
+        const tokenId = payload.jti as string
+        const userId = payload.sub as string
+
+        // Find the token record on the database
+        const storedToken = await prisma.refreshToken.findUnique({
+            where: { id: tokenId },
+        })
+        if (!storedToken) {
+            res.status(401).json({ error: 'Invalid refresh token' })
+            return
+        }
+        // Verify the cookie value matches the stored hash
+        const valid = argon2.verify(storedToken.hashed, token)
+        if (!valid) {
+            res.status(401).json({ error: 'Invalid refresh token' })
+            return
+        }
+
+        // Delete the old token (token rotation)
+        await prisma.refreshToken.delete({ where: { id: tokenId } })
+
+        // Issue new pair of tokens
+        const accessToken = await issueTokens(userId, res)
+
+        res.json({ accessToken })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = req.cookies.refreshToken
+
+        if (token) {
+            try {
+                const { payload } = await verifyRefreshToken(token)
+                await prisma.refreshToken.delete({
+                    where: { id: payload.jti as string },
+                })
+            } catch {
+                // Invalid token
+            }
+        }
+
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        })
+
+        res.json({ message: 'Logged out' })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const authFunction = async (req: Request, res: Response, next: NextFunction) => {
+    try {
     } catch (error) {
         next(error)
     }
