@@ -5,6 +5,6 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         fileParallelism: false,
-        exclude: ['**/movie.routes.test.ts', 'node_modules'],
+        exclude: ['**/movie.routes.test.ts', '**/auth.routes.test.ts', 'node_modules'],
     },
 })

@@ -177,3 +177,17 @@ pnpm prisma:migrate -- --name add-user-watchlist-refresh-token
 - **`src/routes/auth.routes.ts`** — Added POST `/refresh` and `/logout` routes
 - **`src/routes/auth.routes.test.ts`** — Added tests: refresh returns new access token, 401 without cookie, old token invalidated after rotation, logout clears cookie, logout succeeds without cookie, refresh fails after logout
 - **`src/config/db.ts`** — Prisma logging now only shows queries in development; test environment only logs errors
+
+### Commit 7: Add watchlist routes and tests
+
+**Files created:**
+
+- **`src/schemas/watchlist.schema.ts`** — Zod schemas: `createWatchlistItemSchema` (movieId UUID required, status enum optional defaults to PLANNED, rating 1-10 optional, notes optional) and `updateWatchlistItemSchema` (status/rating/notes all optional)
+- **`src/controllers/watchlist.controller.ts`** — Handlers: `getWatchlist` (user's items with movie data via include), `createWatchlistItem` (verifies movie exists, spreads optional fields to avoid undefined), `updateWatchlistItem`, `deleteWatchlistItem`. All protected by auth
+- **`src/routes/watchlist.routes.ts`** — All routes behind `authMiddleware`: GET `/`, POST `/`, PATCH `/:id`, DELETE `/:id`
+- **`src/routes/watchlist.routes.test.ts`** — Tests: empty watchlist, watchlist with movie data, add movie, add with custom status/rating, 404 for non-existent movie, 409 for duplicate, update item, delete item, 401 without auth, error handling for non-existent items
+
+**Files updated:**
+
+- **`src/app.ts`** — Mounted watchlist routes at `/watchlist`
+- **`src/middleware/errorHandler.middleware.ts`** — Added `P2002` (unique constraint violation) handling, returns 409

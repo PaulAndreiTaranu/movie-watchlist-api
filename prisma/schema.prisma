@@ -45,7 +45,7 @@ model WatchlistItem {
   id      String          @id @default(uuid())
   userId  String
   movieId String
-  status  WatchlistStatus
+  status  WatchlistStatus @default(PLANNED)
   rating  Int?
   notes   String?
 

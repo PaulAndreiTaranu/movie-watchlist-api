@@ -22,3 +22,11 @@ export const connectDB = async () => {
 export const disconnectDB = async () => {
     await prisma.$disconnect()
 }
+
+export const prismaDeleteAll = async () => {
+    await prisma.watchlistItem.deleteMany()
+    await prisma.movie.deleteMany()
+    await prisma.refreshToken.deleteMany()
+    await prisma.user.deleteMany()
+    await prisma.$disconnect()
+}

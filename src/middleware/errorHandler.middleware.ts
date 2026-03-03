@@ -9,6 +9,10 @@ export const errorHandler = (err: Error, _req: Request, res: Response, _next: Ne
             res.status(404).json({ error: 'Record not found' })
             return
         }
+        if (prismaError.code === 'P2002') {
+            res.status(409).json({ error: 'Record already exists' })
+            return
+        }
     }
 
     // Fallback for any other error
