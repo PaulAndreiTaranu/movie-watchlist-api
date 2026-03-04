@@ -36,11 +36,6 @@ afterEach(async () => {
     await prisma.watchlistItem.deleteMany()
 })
 
-afterAll(async () => {
-    await prismaDeleteAll()
-    await prisma.$disconnect()
-})
-
 describe('GET /watchlist', () => {
     it('should return an empty watchlist', async () => {
         const response = await request(app)

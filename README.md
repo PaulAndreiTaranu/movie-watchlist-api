@@ -191,3 +191,21 @@ pnpm prisma:migrate -- --name add-user-watchlist-refresh-token
 
 - **`src/app.ts`** — Mounted watchlist routes at `/watchlist`
 - **`src/middleware/errorHandler.middleware.ts`** — Added `P2002` (unique constraint violation) handling, returns 409
+
+### Commit 8: Add security middleware and production hardening
+
+**Terminal commands:**
+
+```bash
+pnpm add helmet cors express-rate-limit
+pnpm add -D @types/cors
+```
+
+**Files created:**
+
+- **`src/config/env.ts`** — Validates required environment variables (DATABASE_URL, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET) at startup. Exits with clear error message if any are missing.
+
+**Files updated:**
+
+- **`src/server.ts`** — Added graceful shutdown handlers for SIGTERM/SIGINT. Closes HTTP server, disconnects Prisma, then exits. Calls `validateEnv()` before starting.
+- **`src/app.ts`** — Added helmet (security headers), cors, rate limiting (general 100/15min + strict auth 5/15min). Health check now pings database with `SELECT 1`, returns 503 if DB is down.

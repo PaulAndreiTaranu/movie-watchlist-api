@@ -5,6 +5,14 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         fileParallelism: false,
-        exclude: ['**/movie.routes.test.ts', '**/auth.routes.test.ts', 'node_modules'],
+        include: ['src/**/*.test.ts'],
+        testTimeout: 10000,
+        setupFiles: ['src/tests/setup.ts'],
+        coverage: {
+            provider: 'v8',
+            include: ['src/**.*.ts'],
+            exclude: ['src/generated/**', 'src/server.ts', 'src/types/**'],
+        },
+        // exclude: ['**/movie.routes.test.ts', '**/auth.routes.test.ts', 'node_modules'],
     },
 })

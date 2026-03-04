@@ -1,14 +1,19 @@
 import argon2 from 'argon2'
 import { NextFunction, Request, Response } from 'express'
+import { randomUUID } from 'node:crypto'
 import { prisma } from '../config/db.js'
 import {
     REFRESH_TOKEN_EXPIRY_MS,
     signAccessToken,
     signRefreshToken,
-    verifyAccessToken,
     verifyRefreshToken,
 } from '../utils/jwt.js'
-import { randomUUID } from 'node:crypto'
+
+const COOKIE_OPTIONS = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict' as const,
+}
 
 const issueTokens = async (userId: string, res: Response) => {
     const tokenId = randomUUID()
@@ -25,14 +30,12 @@ const issueTokens = async (userId: string, res: Response) => {
             id: tokenId,
             userId,
             hashed,
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
         },
     })
 
     res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        ...COOKIE_OPTIONS,
         maxAge: REFRESH_TOKEN_EXPIRY_MS,
     })
 
@@ -42,11 +45,6 @@ const issueTokens = async (userId: string, res: Response) => {
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, email, password } = req.body
-
-        // Sanity checks
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required' })
-        }
 
         // Check if user already exists
         const userExists = await prisma.user.findUnique({ where: { email } })
@@ -79,13 +77,6 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const { email, password } = req.body
 
-        // Sanity checks
-        if (!email || !password) {
-            res.status(401).json({ error: 'Email and password are required' })
-            return
-        }
-
-        // Check if user already exists
         const user = await prisma.user.findUnique({ where: { email } })
         if (!user) {
             res.status(401).json({ error: 'Invalid email or password' })
@@ -130,7 +121,7 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
             return
         }
         // Verify the cookie value matches the stored hash
-        const valid = argon2.verify(storedToken.hashed, token)
+        const valid = await argon2.verify(storedToken.hashed, token)
         if (!valid) {
             res.status(401).json({ error: 'Invalid refresh token' })
             return
@@ -163,20 +154,8 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
             }
         }
 
-        res.clearCookie('refreshToken', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-        })
-
+        res.clearCookie('refreshToken', { ...COOKIE_OPTIONS })
         res.json({ message: 'Logged out' })
-    } catch (error) {
-        next(error)
-    }
-}
-
-export const authFunction = async (req: Request, res: Response, next: NextFunction) => {
-    try {
     } catch (error) {
         next(error)
     }

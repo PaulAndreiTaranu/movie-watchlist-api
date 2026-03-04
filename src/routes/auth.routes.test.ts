@@ -1,5 +1,5 @@
 import request from 'supertest'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { app } from '../app.js'
 import { prisma } from '../config/db.js'
 
@@ -14,10 +14,6 @@ beforeAll(async () => {
 afterEach(async () => {
     await prisma.refreshToken.deleteMany()
     await prisma.user.deleteMany()
-})
-
-afterAll(async () => {
-    await prisma.$disconnect()
 })
 
 describe('POST /auth/register', () => {

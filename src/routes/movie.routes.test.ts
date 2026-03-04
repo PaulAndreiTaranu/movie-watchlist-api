@@ -26,13 +26,6 @@ afterEach(async () => {
     await prisma.movie.deleteMany()
 })
 
-afterAll(async () => {
-    await prisma.movie.deleteMany()
-    await prisma.refreshToken.deleteMany()
-    await prisma.user.deleteMany()
-    await prisma.$disconnect()
-})
-
 describe('POST /movies', () => {
     it('should create a movie', async () => {
         const response = await request(app)
