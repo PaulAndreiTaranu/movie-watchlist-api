@@ -1,13 +1,32 @@
 import { NextFunction, Request, Response } from 'express'
 import { prisma } from '../config/db.js'
+import { parsePagination } from '../utils/paginations.js'
 
 export const getWatchlist = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const watchlistItems = await prisma.watchlistItem.findMany({
-            where: { userId: req.user!.id },
-            include: { movie: true },
+        const { page, limit, skip } = parsePagination(
+            req.query as { page?: string; limit?: string },
+        )
+        const [watchlistItems, total] = await Promise.all([
+            prisma.watchlistItem.findMany({
+                where: { userId: req.user!.id },
+                include: { movie: true },
+                skip,
+                take: limit,
+            }),
+            prisma.watchlistItem.count({
+                where: { userId: req.user!.id },
+            }),
+        ])
+        res.json({
+            data: watchlistItems,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
         })
-
         res.status(200).json(watchlistItems)
     } catch (error) {
         next(error)

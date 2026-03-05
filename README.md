@@ -209,3 +209,16 @@ pnpm add -D @types/cors
 
 - **`src/server.ts`** — Added graceful shutdown handlers for SIGTERM/SIGINT. Closes HTTP server, disconnects Prisma, then exits. Calls `validateEnv()` before starting.
 - **`src/app.ts`** — Added helmet (security headers), cors, rate limiting (general 100/15min + strict auth 5/15min). Health check now pings database with `SELECT 1`, returns 503 if DB is down.
+
+### Commit 9: Add pagination to list endpoints
+
+**Files created:**
+
+- **`src/utils/pagination.ts`** — Reusable pagination helper. Parses `page` and `limit` query params, enforces min page 1, limit 1-100, default 20. Returns `{ page, limit, skip }` for Prisma.
+
+**Files updated:**
+
+- **`src/controllers/movie.controller.ts`** — `getAllMovies` now returns `{ data, pagination }` with page/limit/total/totalPages. Runs data query and count in parallel with `Promise.all`.
+- **`src/controllers/watchlist.controller.ts`** — `getWatchlist` same pagination pattern, scoped to authenticated user.
+- **`src/routes/movie.routes.test.ts`** — Updated GET tests to check `response.body.data` and `response.body.pagination`.
+- **`src/routes/watchlist.routes.test.ts`** — Same pagination response shape updates.

@@ -63,7 +63,8 @@ describe('GET /movies', () => {
     it('should return an empty array when no movies exits', async () => {
         const response = await request(app).get('/movies').expect(200)
 
-        expect(response.body).toEqual([])
+        expect(response.body.data).toEqual([])
+        expect(response.body.pagination.total).toBe(0)
     })
 
     it('should return all movies', async () => {
@@ -77,7 +78,8 @@ describe('GET /movies', () => {
 
         const response = await request(app).get('/movies').expect(200)
 
-        expect(response.body).toHaveLength(2)
+        expect(response.body.data).toHaveLength(2)
+        expect(response.body.pagination.total).toBe(2)
     })
 })
 

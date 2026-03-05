@@ -43,7 +43,7 @@ describe('GET /watchlist', () => {
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(200)
 
-        expect(response.body).toEqual([])
+        expect(response.body.data).toEqual([])
     })
 
     it('should return user watchlist with movie data', async () => {
@@ -56,8 +56,8 @@ describe('GET /watchlist', () => {
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(200)
 
-        expect(response.body).toHaveLength(1)
-        expect(response.body[0].movie.title).toBe(testMovie.title)
+        expect(response.body.data).toHaveLength(1)
+        expect(response.body.data[0].movie.title).toBe(testMovie.title)
     })
 })
 

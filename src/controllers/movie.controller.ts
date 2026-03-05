@@ -1,10 +1,25 @@
 import { NextFunction, Request, Response } from 'express'
 import { prisma } from '../config/db.js'
+import { parsePagination } from '../utils/paginations.js'
 
-export const getAllMovies = async (_req: Request, res: Response, next: NextFunction) => {
+export const getAllMovies = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const movies = await prisma.movie.findMany()
-        res.json(movies)
+        const { page, limit, skip } = parsePagination(
+            req.query as { page?: string; limit?: string },
+        )
+        const [movies, total] = await Promise.all([
+            prisma.movie.findMany({ skip, take: limit }),
+            prisma.movie.count(),
+        ])
+        res.json({
+            data: movies,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        })
     } catch (error) {
         next(error)
     }
