@@ -1,13 +1,14 @@
 import cookieParser from 'cookie-parser'
+import cors from 'cors'
 import express from 'express'
+import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
+import morgan from 'morgan'
+import { prisma } from './config/db.js'
 import { errorHandler } from './middleware/errorHandler.middleware.js'
 import { authRoutes } from './routes/auth.routes.js'
 import { movieRoutes } from './routes/movie.routes.js'
 import { watchlistRoutes } from './routes/watchlist.routes.js'
-import cors from 'cors'
-import helmet from 'helmet'
-import rateLimit from 'express-rate-limit'
-import { prisma } from './config/db.js'
 
 // General limiter: 100 per 15 min
 const generalRateLimiter = rateLimit({
@@ -27,6 +28,9 @@ app.use(cors())
 app.use(helmet())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
+if (process.env.NODE_ENV !== 'test') {
+    app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
+}
 app.use(generalRateLimiter)
 app.use('/api/v1/movies', movieRoutes)
 app.use('/api/v1/auth', authLimiter, authRoutes)

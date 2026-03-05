@@ -15,7 +15,11 @@ export const errorHandler = (err: Error, _req: Request, res: Response, _next: Ne
         }
     }
 
-    // Fallback for any other error
+    // Log full error to server-side
     console.error(err)
-    res.status(500).json({ error: 'Internal server error' })
+
+    // Only safe messages to client - don't expose stack traces
+    res.status(500).json({
+        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+    })
 }
