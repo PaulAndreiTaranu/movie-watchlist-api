@@ -16,9 +16,9 @@ afterEach(async () => {
     await prisma.user.deleteMany()
 })
 
-describe('POST /auth/register', () => {
+describe('POST /api/v1/auth/register', () => {
     it('should register new user and set refresh token cookie', async () => {
-        const response = await request(app).post('/auth/register').send(testUser).expect(201)
+        const response = await request(app).post('/api/v1/auth/register').send(testUser).expect(201)
         const cookies = response.headers['set-cookie']
 
         // Check the response
@@ -33,15 +33,15 @@ describe('POST /auth/register', () => {
     })
 
     it('should return 409 for duplicate email', async () => {
-        await request(app).post('/auth/register').send(testUser)
-        const response = await request(app).post('/auth/register').send(testUser).expect(409)
+        await request(app).post('/api/v1/auth/register').send(testUser)
+        const response = await request(app).post('/api/v1/auth/register').send(testUser).expect(409)
 
         expect(response.body.error).toBe('Email already registered')
     })
 
     it('should return 400 for invalid email', async () => {
         await request(app)
-            .post('/auth/register')
+            .post('/api/v1/auth/register')
             .send({
                 ...testUser,
                 email: 'not-valid-email',
@@ -51,7 +51,7 @@ describe('POST /auth/register', () => {
 
     it('should return 400 for short password', async () => {
         await request(app)
-            .post('/auth/register')
+            .post('/api/v1/auth/register')
             .send({
                 ...testUser,
                 password: '12',
@@ -60,12 +60,12 @@ describe('POST /auth/register', () => {
     })
 })
 
-describe('POST /auth/login', () => {
+describe('POST /api/v1/auth/login', () => {
     it('should login an existing user', async () => {
-        await request(app).post('/auth/register').send(testUser)
+        await request(app).post('/api/v1/auth/register').send(testUser)
 
         const response = await request(app)
-            .post('/auth/login')
+            .post('/api/v1/auth/login')
             .send({
                 email: testUser.email,
                 password: testUser.password,
@@ -77,10 +77,10 @@ describe('POST /auth/login', () => {
     })
 
     it('should return 401 for worng password', async () => {
-        await request(app).post('/auth/register').send(testUser)
+        await request(app).post('/api/v1/auth/register').send(testUser)
 
         const response = await request(app)
-            .post('/auth/login')
+            .post('/api/v1/auth/login')
             .send({
                 email: testUser.email,
                 password: 'wrong-pass',
@@ -91,10 +91,10 @@ describe('POST /auth/login', () => {
     })
 
     it('should return 401 for non-existent email', async () => {
-        await request(app).post('/auth/register').send(testUser)
+        await request(app).post('/api/v1/auth/register').send(testUser)
 
         const response = await request(app)
-            .post('/auth/login')
+            .post('/api/v1/auth/login')
             .send({
                 email: 'wrongEmail@test.com',
                 password: 'wrong-pass',
@@ -105,32 +105,35 @@ describe('POST /auth/login', () => {
     })
 })
 
-describe('POST /auth/refresh', () => {
+describe('POST /api/v1/auth/refresh', () => {
     it('should return a new access token', async () => {
         // Register to get cookie
-        const registerRes = await request(app).post('/auth/register').send(testUser)
+        const registerRes = await request(app).post('/api/v1/auth/register').send(testUser)
         // Extrat the cookie
         const cookies = registerRes.headers['set-cookie']
         // Send the cookie back to /refresh
-        const response = await request(app).post('/auth/refresh').set('Cookie', cookies).expect(200)
+        const response = await request(app)
+            .post('/api/v1/auth/refresh')
+            .set('Cookie', cookies)
+            .expect(200)
 
         expect(response.body.accessToken).toBeDefined()
     })
 
     it('should return 401 without refresh token cookie', async () => {
-        const response = await request(app).post('/auth/refresh').expect(401)
+        const response = await request(app).post('/api/v1/auth/refresh').expect(401)
 
         expect(response.body.error).toBe('No refresh token')
     })
 
     it('should invalidate old refresh token after rotation', async () => {
         // Register to get cookie
-        const registerRes = await request(app).post('/auth/register').send(testUser)
+        const registerRes = await request(app).post('/api/v1/auth/register').send(testUser)
         // Extrat the cookie
         const cookies = registerRes.headers['set-cookie']
         // Send the cookie back to /refresh
-        await request(app).post('/auth/refresh').set('Cookie', cookies).expect(200)
+        await request(app).post('/api/v1/auth/refresh').set('Cookie', cookies).expect(200)
         // Send the cookie again to /refresh, should fail
-        await request(app).post('/auth/refresh').set('Cookie', cookies).expect(401)
+        await request(app).post('/api/v1/auth/refresh').set('Cookie', cookies).expect(401)
     })
 })

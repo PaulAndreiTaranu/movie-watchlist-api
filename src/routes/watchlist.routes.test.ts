@@ -15,12 +15,12 @@ beforeAll(async () => {
     await prismaDeleteAll()
 
     // Register user to get an access token for protected routes
-    const registeredUser = await request(app).post('/auth/register').send(testUser)
+    const registeredUser = await request(app).post('/api/v1/auth/register').send(testUser)
     userId = registeredUser.body.user.id
     accessToken = registeredUser.body.accessToken
 
     const createdMovie = await request(app)
-        .post('/movies')
+        .post('/api/v1/movies')
         .set('Authorization', `Bearer ${accessToken}`)
         .send(testMovie)
     movieId = createdMovie.body.id
@@ -36,10 +36,10 @@ afterEach(async () => {
     await prisma.watchlistItem.deleteMany()
 })
 
-describe('GET /watchlist', () => {
+describe('GET /api/v1/watchlist', () => {
     it('should return an empty watchlist', async () => {
         const response = await request(app)
-            .get('/watchlist')
+            .get('/api/v1/watchlist')
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(200)
 
@@ -52,7 +52,7 @@ describe('GET /watchlist', () => {
         })
 
         const response = await request(app)
-            .get('/watchlist')
+            .get('/api/v1/watchlist')
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(200)
 
@@ -61,10 +61,10 @@ describe('GET /watchlist', () => {
     })
 })
 
-describe('POST /watchlist', () => {
+describe('POST /api/v1/watchlist', () => {
     it('should add a movie to watchlist', async () => {
         const response = await request(app)
-            .post('/watchlist')
+            .post('/api/v1/watchlist')
             .set('Authorization', `Bearer ${accessToken}`)
             .send({ movieId })
             .expect(201)
@@ -76,7 +76,7 @@ describe('POST /watchlist', () => {
 
     it('should add with custom status and rating', async () => {
         const response = await request(app)
-            .post('/watchlist')
+            .post('/api/v1/watchlist')
             .set('Authorization', `Bearer ${accessToken}`)
             .send({ movieId, status: 'COMPLETED', rating: 8 })
             .expect(201)
@@ -87,7 +87,7 @@ describe('POST /watchlist', () => {
 
     it('should return 404 for non-existent movie', async () => {
         const response = await request(app)
-            .post('/watchlist')
+            .post('/api/v1/watchlist')
             .set('Authorization', `Bearer ${accessToken}`)
             .send({
                 movieId: '00000000-0000-0000-0000-000000000000',
@@ -100,12 +100,12 @@ describe('POST /watchlist', () => {
 
     it('should return 409 for duplicate watchlist item', async () => {
         await request(app)
-            .post('/watchlist')
+            .post('/api/v1/watchlist')
             .set('Authorization', `Bearer ${accessToken}`)
             .send({ movieId, status: 'COMPLETED', rating: 8 })
 
         const response = await request(app)
-            .post('/watchlist')
+            .post('/api/v1/watchlist')
             .set('Authorization', `Bearer ${accessToken}`)
             .send({ movieId, status: 'COMPLETED', rating: 8 })
             .expect(409)
@@ -114,15 +114,15 @@ describe('POST /watchlist', () => {
     })
 })
 
-describe('PATCH /watchlist/:id', () => {
+describe('PATCH /api/v1/watchlist/:id', () => {
     it('should updated watchlist item', async () => {
         const watchlistItem = await request(app)
-            .post('/watchlist')
+            .post('/api/v1/watchlist')
             .set('Authorization', `Bearer ${accessToken}`)
             .send({ movieId, status: 'COMPLETED', rating: 8 })
 
         const response = await request(app)
-            .patch(`/watchlist/${watchlistItem.body.id}`)
+            .patch(`/api/v1/watchlist/${watchlistItem.body.id}`)
             .set('Authorization', `Bearer ${accessToken}`)
             .send({ status: 'DROPPED', rating: 7 })
             .expect(200)
@@ -132,15 +132,15 @@ describe('PATCH /watchlist/:id', () => {
     })
 })
 
-describe('DELETE /watchlist/:id', () => {
+describe('DELETE /api/v1/watchlist/:id', () => {
     it('should delete watchlist item', async () => {
         const watchlistItem = await request(app)
-            .post('/watchlist')
+            .post('/api/v1/watchlist')
             .set('Authorization', `Bearer ${accessToken}`)
             .send({ movieId, status: 'COMPLETED', rating: 8 })
 
         await request(app)
-            .delete(`/watchlist/${watchlistItem.body.id}`)
+            .delete(`/api/v1/watchlist/${watchlistItem.body.id}`)
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(204)
 
@@ -155,7 +155,7 @@ describe('DELETE /watchlist/:id', () => {
 describe('Error handling', () => {
     it('should return 404 when updating non-existent watchlist item', async () => {
         const response = await request(app)
-            .patch('/watchlist/00000000-0000-0000-0000-000000000000')
+            .patch('/api/v1/watchlist/00000000-0000-0000-0000-000000000000')
             .set('Authorization', `Bearer ${accessToken}`)
             .send({ status: 'COMPLETED' })
             .expect(404)
@@ -165,7 +165,7 @@ describe('Error handling', () => {
 
     it('should return 404 when deleting non-existent watchlist item', async () => {
         await request(app)
-            .delete('/watchlist/00000000-0000-0000-0000-000000000000')
+            .delete('/api/v1/watchlist/00000000-0000-0000-0000-000000000000')
             .set('Authorization', `Bearer ${accessToken}`)
             .expect(404)
     })

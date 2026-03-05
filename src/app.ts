@@ -28,9 +28,9 @@ app.use(helmet())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(generalRateLimiter)
-app.use('/movies', movieRoutes)
-app.use('/auth', authLimiter, authRoutes)
-app.use('/watchlist', watchlistRoutes)
+app.use('/api/v1/movies', movieRoutes)
+app.use('/api/v1/auth', authLimiter, authRoutes)
+app.use('/api/v1/watchlist', watchlistRoutes)
 
 // errorHandler needs to be mounted after all routes
 app.use(errorHandler)

@@ -18,7 +18,7 @@ export const getWatchlist = async (req: Request, res: Response, next: NextFuncti
                 where: { userId: req.user!.id },
             }),
         ])
-        res.json({
+        res.status(200).json({
             data: watchlistItems,
             pagination: {
                 page,
@@ -27,7 +27,6 @@ export const getWatchlist = async (req: Request, res: Response, next: NextFuncti
                 totalPages: Math.ceil(total / limit),
             },
         })
-        res.status(200).json(watchlistItems)
     } catch (error) {
         next(error)
     }

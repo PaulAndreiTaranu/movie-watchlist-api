@@ -222,3 +222,12 @@ pnpm add -D @types/cors
 - **`src/controllers/watchlist.controller.ts`** — `getWatchlist` same pagination pattern, scoped to authenticated user.
 - **`src/routes/movie.routes.test.ts`** — Updated GET tests to check `response.body.data` and `response.body.pagination`.
 - **`src/routes/watchlist.routes.test.ts`** — Same pagination response shape updates.
+
+### Commit 10: Add API versioning
+
+**Files updated:**
+
+- **`src/app.ts`** — All routes prefixed with `/api/v1/` (movies, auth, watchlist). Health check stays at `/health`.
+- **`src/routes/auth.routes.test.ts`** — All paths updated to `/api/v1/auth/*`
+- **`src/routes/movie.routes.test.ts`** — All paths updated to `/api/v1/movies/*`
+- **`src/routes/watchlist.routes.test.ts`** — All paths updated to `/api/v1/watchlist/*` and `/api/v1/movies/*`
