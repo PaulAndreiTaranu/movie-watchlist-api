@@ -7,7 +7,7 @@
     "scripts": {
         "with-local-env": "dotenvx run -f .env.local --",
         "build": "pnpm with-local-env tsc",
-        "start": "node dist/index.js",
+        "start": "pnpm with-local-env node dist/server.js",
         "dev": "pnpm with-local-env tsx --watch src/server.ts",
         "test": "NODE_ENV='test' pnpm with-local-env vitest --run",
         "test:watch": "NODE_ENV='test' pnpm with-local-env vitest",
