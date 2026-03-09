@@ -1,0 +1,13 @@
+services:
+    api:
+        build: .
+        restart: unless-stopped
+        ports:
+            - '3001:3001'
+        env_file: .env.production
+        networks:
+            - backend
+
+networks:
+    backend:
+        external: true
