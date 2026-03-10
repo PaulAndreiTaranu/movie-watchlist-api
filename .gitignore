@@ -6,7 +6,7 @@ dist
 
 # Environment variables
 .env*
-!.env.local.example
+!.env.example
 
 # Prisma generated client
 src/generated/prisma
@@ -20,4 +20,3 @@ src/generated/prisma
 # Claude
 CLAUDE.md
 /.claude
-/src/generated/prisma

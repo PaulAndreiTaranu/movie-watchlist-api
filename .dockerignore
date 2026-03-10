@@ -1,23 +1,27 @@
 # Dependencies
+
 node_modules
 
 # Build output
+
 dist
 
 # Environment variables
-.env*
-!.env.local.example
+
+.env\* !.env.local.example
 
 # Prisma generated client
+
 src/generated/prisma
 
 # Logs
-*.log
+
+\*.log
 
 # OS files
+
 .DS_Store
 
 # Claude
-CLAUDE.md
-/.claude
-/src/generated/prisma
+
+CLAUDE.md /.claude

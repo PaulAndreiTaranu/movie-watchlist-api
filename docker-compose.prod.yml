@@ -1,13 +1,53 @@
+name: movie-watchlist
 services:
-    api:
-        build: .
+    database:
+        container_name: postgres-database
+        image: postgres:16
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
+        command:
+            [
+                'postgres',
+                '-c',
+                'shared_buffers=32MB',
+                '-c',
+                'work_mem=4MB',
+                '-c',
+                'max_connections=20',
+            ]
+        deploy:
+            resources:
+                limits:
+                    memory: 128M
         restart: unless-stopped
         ports:
-            - '3001:3001'
-        env_file: .env.production
+            - '127.0.0.1:5432:5432'
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+            interval: 10s
+            timeout: 5s
+            retries: 5
         networks:
-            - backend
+            - movie-watchlist-net
+    api:
+        container_name: node-api
+        env_file: .env
+        restart: unless-stopped
+        build: .
+        ports:
+            - '127.0.0.1:3001:3001'
+        depends_on:
+            database:
+                condition: service_healthy
+        networks:
+            - movie-watchlist-net
 
 networks:
-    backend:
-        external: true
+    movie-watchlist-net:
+
+volumes:
+    pgdata:

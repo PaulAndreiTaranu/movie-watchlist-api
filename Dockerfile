@@ -26,7 +26,11 @@ WORKDIR /app
 ENV NODE_ENV="production"
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/prisma.config.ts ./
 COPY package.json ./
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
 USER node
 EXPOSE 3001
-CMD ["node", "dist/server.js"]
+CMD ["./entrypoint.sh"]
